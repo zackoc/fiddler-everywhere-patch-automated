@@ -4,9 +4,6 @@
 Guides you to Patch Fiddler Everywhere on Windows Automatically. 
 > Parent Repo: https://github.com/msojocs/fiddler-everywhere-enhance
 
-> [!NOTE]
-> Note that the repo is transfered from `sipsuru` to `auto-yui-patch`
-
 ## Special: You can also patch manually by yourself. Visit [This repo](https://github.com/sipsuru/fiddler-everywhere-patch-manual)
 
 ## What and How?
@@ -16,32 +13,15 @@ This's the guide for applying patch automatically.
 ![Unlimited Trial](https://github.com/user-attachments/assets/e9c83778-27fa-456a-96e6-07bb0cd7f4ad)
 
 
-> [!NOTE]
-> Look forward for Linux Support.
+> [!IMPORTANT]
+> ### Update Notice: Support for Syncing forks with upstream repo: [READ MORE]()
+
+---
 
 ## Get Started.
-<!--
- > [!IMPORTANT]
- > Failing to download msojocs server for all FE versions (Because msojocs renamed `master` branch to `main`), is fixed now
-
- > [!IMPORTANT]
- > Failing to download Yukihana Patch for FE versions < 5.17.0 (Because file names sctill contains `yukihana` not `yui` except `Yui-Patch 1.1.3 +`), is fixed now..
-
- > [!IMPORTANT]
- > Failing to download Yui Patch for all FE versions (Because the organization and repo-name renamed from `Yukihana` `--><!--` `Yui`), is fixed now.
-<!--
- > [!IMPORTANT]
- > Failing to download Yukihana Patch for 5.17.0 + (Because continuous release & latest release didn't contain windows patches), is fixed now. 
-
- > [!IMPORTANT]
- > Not patching 5.17.0+ when you trigger from "Custom Version - Workflow Dispatch" is Fixed now!
--->
  > [!TIP]
- > You must always check if your fork is up to date so no fails. 
-<!--
- > [!NOTE]
- > Only for Windows!
--->
+ > You must always check if your fork is up to date so no fails. (We reccomend you enable [0scheduled upstream pulling]())
+
  * How even this Automated Patching Works?
    - Well, this automated patch do the same that you do mannually for patching. It downloads fiddler everywhere extract it. Remove, Replace, Edit, Move files and then, the patched application is ready.
 
@@ -53,6 +33,7 @@ This's the guide for applying patch automatically.
 > We highly reccomend you to use ***Latest Version - Workflow Dispatch***, which patch the latest available version.
 > ***Custon Version - Workflow Dispatch*** allows you to select a version starting from 5.9.0 + too.
 
+---
 
 ### With `Latest Version - Workflow Dispatch` 
 [![](https://github.com/sipsuru/fiddler-everywhere-patch-automated/actions/workflows/cp__latest_dispatch.yml/badge.svg)](https://github.com/sipsuru/fiddler-everywhere-patch-automated/actions/workflows/cp__latest_dispatch.yml)
@@ -85,6 +66,28 @@ This's the guide for applying patch automatically.
   * *Here how you do it...*
 
     https://github.com/user-attachments/assets/1e9fa214-b9c9-469c-83f0-e5ae4527d2f7
+
+---
+
+### Scheduled Syncing Forks with Upstream Repo
+  FE Patch `1.0.8` adds support to sync your repo with upstream repo - scheduled (default: every 6 hours) 
+  > [!NOTE]
+  > Tnx: [lobe-chat](https://github.com/lobehub/lobe-chat) & [ous50](https://github.com/ous50)
+
+  > [!IMPORTANT]
+  >  - For this upstream pulling action to work, you need to enable [Upstream Sync](.github/workflows/cp_pull_upstream.yml) Github Action.
+  >  - And the action'll create an issue in your fork if pulling is unsuccesfull. So you need to enable `issues` for your fork with your repositories settings (`Settings` `-->` `General` `-->` `Features` `Issues`)
+  >  - For more information on how this action works: [lobe-chat's Sync Feature Wiki - en-US](https://github.com/lobehub/lobe-chat/wiki/Upstream-Sync) & [lobe-chat's Sync Feature Wiki - zh-CN](https://github.com/lobehub/lobe-chat/wiki/Upstream-Sync.zh-CN)
+
+  > [!TIP]
+  >  - You can change schedule by editing `- cron: '0 */6 * * *'` in [cp_pull_upstream.yml](.github/workflows/cp_pull_upstream.yml)
+  >  - For more information on `- cron` of Github Actions, visit [Github Documentation - Scheduling Actions](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#schedule)
+
+  > [!CAUTION]
+  >  - IF you use another method (maybe a Github App), to sync your forks with upstream repos, (for ex: [Pull by Wei](https://github.com/wei/pull)), you should disable the `Upstream Sync` action by going through, `Actions` `-->` `Upstream Sync` `-->` `Right Top Menu [...]` `-->` `Disable Workflow`
+  >  - For more information on how to disable a workflow: [Github Documentation on Disabling & Enabling Workflows](https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-workflow-runs/disabling-and-enabling-a-workflow)
+
+---
 
 > [!NOTE]
 > For Generic `Linux` and `MacOS` instructions, use [source repository](https://github.com/msojocs/fiddler-everywhere-enhance)
