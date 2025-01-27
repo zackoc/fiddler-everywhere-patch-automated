@@ -11,13 +11,13 @@
 ![无限试用期](https://github.com/user-attachments/assets/e9c83778-27fa-456a-96e6-07bb0cd7f4ad)
 
 > [!IMPORTANT]
-> ### 更新通知：支持同步 Fork 与上游仓库：[阅读更多]()
+> ### 更新通知：支持同步 Fork 与上游仓库：[阅读更多](#scheduled-syncing-forks-with-upstream-repo)
 
 ---
 
 ## 快速开始
 > [!TIP]
-> 您应始终检查您的 Fork 是否是最新的，以避免失败。（我们推荐您启用 [定时上游同步]()）
+> 您应始终检查您的 Fork 是否是最新的，以避免失败。（我们推荐您启用 [定时上游同步](#scheduled-syncing-forks-with-upstream-repo)）
 
 * 自动化打补丁是如何工作的？
   - 该自动化补丁工具实现了与手动补丁相同的功能：它会下载 Fiddler Everywhere，解压缩、删除、替换、编辑、移动文件，最后生成已打补丁的应用程序。
