@@ -14,13 +14,13 @@ This's the guide for applying patch automatically.
 
 
 > [!IMPORTANT]
-> ### Update Notice: Support for Syncing forks with upstream repo: [READ MORE]()
+> ### Update Notice: Support for Syncing forks with upstream repo: [READ MORE](#scheduled-syncing-forks-with-upstream-repo)
 
 ---
 
 ## Get Started.
  > [!TIP]
- > You must always check if your fork is up to date so no fails. (We reccomend you enable [0scheduled upstream pulling]())
+ > You must always check if your fork is up to date so no fails. (We reccomend you enable [0scheduled upstream pulling](#scheduled-syncing-forks-with-upstream-repo))
 
  * How even this Automated Patching Works?
    - Well, this automated patch do the same that you do mannually for patching. It downloads fiddler everywhere extract it. Remove, Replace, Edit, Move files and then, the patched application is ready.
