@@ -1,4 +1,4 @@
-> [!WATNING]
+> [!WARNING]
 > For some FE versions `cp_dispatch` action workflow won't work for now. [Due to backward compatibility issues]
 
 ## [中文翻译版](README_CN.md)
