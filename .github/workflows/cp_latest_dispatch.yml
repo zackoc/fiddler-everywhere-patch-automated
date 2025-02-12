@@ -198,7 +198,7 @@ jobs:
           if-no-files-found: error
 
   download-fiddler-everywhere-windows:
-    if: ${{ env.OS_ARCH == 'Windows (x86_64)' }}
+    if: ${{ github.event.inputs.os-and-arch == 'Windows (x86_64)' }}
     runs-on: windows-latest
     needs: 
       - scrape_fe_version
@@ -238,7 +238,7 @@ jobs:
           if-no-files-found: error
 
   download-fiddler-everywhere-linux:
-    if: ${{ env.OS_ARCH == 'Linux (x86_64)' }}
+    if: ${{ github.event.inputs.os-and-arch == 'Linux (x86_64)' }}
     runs-on: ubuntu-latest
     needs: 
       - scrape_fe_version
