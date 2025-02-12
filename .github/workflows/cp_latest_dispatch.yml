@@ -24,6 +24,7 @@ jobs:
     runs-on: windows-latest
     outputs:
       library_extension:  ${{ steps.set_library_extension.outputs.library_extension }}
+      arch_code:  ${{ steps.set_arch.outputs.arch }}
 
     steps:
       - name: Set Library Extension (dll / so / dylib)
@@ -43,6 +44,28 @@ jobs:
           }
           
           "library_extension=$extension" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+
+      - name: Set Library Extension (dll / so / dylib)
+        id: set_arch
+        shell: pwsh
+        run: |
+          $arch = 'not-selected'
+    
+          if ($env:OS_ARCH -eq 'Windows (x86_64)') {
+            $arch = 'win32-x86_64'
+          } elseif ($env:OS_ARCH -eq 'Linux (x86_64)') {
+            $arch = 'linux-x86_64'
+          } elseif ($env:OS_ARCH -eq 'Mac (arm64)') {
+            $arch = 'mac-arm64'
+          } elseif ($env:OS_ARCH -eq 'Mac (arm64e)') {
+            $arch = 'mac-arm64e'
+          } elseif ($env:OS_ARCH -eq 'Mac (x86_64)') {
+            $arch = 'mac-x86_64'
+          } else {
+            throw "Unsupported OS architecture: $env:OS_ARCH"
+          }
+          
+          "arch=$arch" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
   scrape_fe_version:
     runs-on: windows-latest
@@ -86,6 +109,7 @@ jobs:
     env: 
       SCRAPED_VERSION: ${{ needs.scrape_fe_version.outputs.scraped_version }}
       LIBRARY_EXTENSION: ${{ needs.init_os_arch.outputs.library_extension }}
+      ARCH_CODE: ${{ needs.init_os_arch.outputs.arch }}
       
     outputs:
       is-compatible-cont: ${{ steps.is-compatible-cont.outputs.is-compatible-cont }}
@@ -149,7 +173,7 @@ jobs:
           Write-Host "EXTENSION = $env:LIBRARY_EXTENSION"
           try {
             # Build the download URLs
-            $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-$env:Yui_FIDDLER_NAME_NO_EXTENSION-win32-x86_64-$env:Yui_RELEASE.$env:LIBRARY_EXTENSION"
+            $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-$env:Yui_FIDDLER_NAME_NO_EXTENSION-$env:ARCH_CODE-$env:Yui_RELEASE.$env:LIBRARY_EXTENSION"
             
             # Print the URLs to ensure they're correct
             Write-Host "Downloading files from $env:Yui_RELEASE"
