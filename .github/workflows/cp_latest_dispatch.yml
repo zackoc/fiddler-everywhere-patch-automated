@@ -81,6 +81,7 @@ jobs:
     runs-on: windows-latest
     needs: 
       - scrape_fe_version
+      - init_os_arch
 
     env: 
       SCRAPED_VERSION: ${{ needs.scrape_fe_version.outputs.scraped_version }}
