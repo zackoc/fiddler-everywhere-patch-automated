@@ -40,7 +40,7 @@ This's the guide for applying patch automatically.
 ---
 
 ### With `Latest Version - Workflow Dispatch` 
-[![](https://github.com/sipsuru/fiddler-everywhere-patch-automated/actions/workflows/cp__latest_dispatch.yml/badge.svg)](https://github.com/sipsuru/fiddler-everywhere-patch-automated/actions/workflows/cp__latest_dispatch.yml)
+[![](https://github.com/auto-yui-patch/fiddler-everywhere-patch-automated/actions/workflows/cp_latest_dispatch.yml/badge.svg)](https://github.com/auto-yui-patch/fiddler-everywhere-patch-automated/actions/workflows/cp_latest_dispatch.yml)
 
   - Fork this repo.
   - Go to actions tab, Select `Latest Version - Workflow Dispatch` workflow.
@@ -54,7 +54,7 @@ This's the guide for applying patch automatically.
 
 
 ### With `Custom Version - WorkFlow Dispatch` 
-[![](https://github.com/sipsuru/fiddler-everywhere-patch-automated/actions/workflows/cp_dispatch.yml/badge.svg)](https://github.com/sipsuru/fiddler-everywhere-patch-automated/actions/workflows/cp_dispatch.yml)
+[![](https://github.com/auto-yui-patch/fiddler-everywhere-patch-automated/actions/workflows/cp_dispatch.yml/badge.svg)](https://github.com/auto-yui-patch/fiddler-everywhere-patch-automated/actions/workflows/cp_dispatch.yml)
 
   - Fork this repo
   - Go to actions tab, Select `Custom Version - Workflow Dispatch` workflow.
