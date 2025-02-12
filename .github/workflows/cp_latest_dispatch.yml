@@ -2,10 +2,53 @@ name: Latest Version - Workflow Dispatch
 
 on:
   workflow_dispatch:
+    inputs:
+      os-and-arch:
+        description: 'Operating System And Architecture'
+        required: true
+        default: '6.0.0'
+        type: choice
+        options:
+          - Windows (x86_64)
+          - Linux (x86_64)
+          - Mac (arm64)
+          - Mac (arm64e)
+          - Mac (x86_64)
+
+env:
+  OS_ARCH: ${{ github.event.inputs.os-and-arch }}
 
 jobs:
+
+  init_os_arch:
+    runs-on: windows-latest
+    outputs:
+      library_extension:  ${{ steps.set_library_extension.outputs.library_extension }}
+
+    steps:
+      - name: Set Library Extension (dll / so / dylib)
+        id: set_library_extension
+        shell: pwsh
+        run: |
+          $extension = 'not-selected'
+    
+          if ($env:OS_ARCH -eq 'Windows (x86_64)') {
+            $extension = 'dll'
+          } elseif ($env:OS_ARCH -eq 'Linux (x86_64)') {
+            $extension = 'so'
+          } elseif ($env:OS_ARCH -eq 'Mac (arm64)' -or $env:OS_ARCH -eq 'Mac (arm64e)' -or $env:OS_ARCH -eq 'Mac (x86_64)') {
+            $extension = 'dylib'
+          } else {
+            throw "Unsupported OS architecture: $env:OS_ARCH"
+          }
+          
+          "library_extension=$extension" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+
   scrape_fe_version:
     runs-on: windows-latest
+    needs:
+      - init_os_arch
+    
     outputs:
       scraped_version: ${{ steps.set_scraped_version.outputs.scraped_version }}
 
@@ -43,6 +86,7 @@ jobs:
 
     env: 
       SCRAPED_VERSION: ${{ needs.scrape_fe_version.outputs.scraped_version }}
+      LIBRARY_EXTENSION: ${{ needs.init_os_arch.outputs.library_extension }}
       
     outputs:
       is-compatible-cont: ${{ steps.is-compatible-cont.outputs.is-compatible-cont }}
@@ -71,21 +115,16 @@ jobs:
         id: is-compatible-cont
         run: echo "is-compatible-cont=${{ env.IS_COMPATIBLE_CONT }}" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
-      - name: Set Yui name  (>= 5.17.0)
-        if: env.IS_COMPATIBLE_CONT == 'true'
+      - name: Set Yui name 
         run: echo "YUI_NAME=yui" | Out-File -Append -FilePath $env:GITHUB_ENV
-
-      - name: Set Yui name  (< 5.17.0)
-        if: env.IS_COMPATIBLE_CONT == 'false'
-        run: echo "YUI_NAME=yukihana" | Out-File -Append -FilePath $env:GITHUB_ENV
         
       - name: Set Yui fiddler name (>= 5.17.0)
         if: env.IS_COMPATIBLE_CONT == 'true'
-        run: echo "Yui_FIDDLER_NAME=fiddler" | Out-File -Append -FilePath $env:GITHUB_ENV
+        run: echo "Yui_FIDDLER_NAME=fiddler.$env:LIBRARY_EXTENSION" | Out-File -Append -FilePath $env:GITHUB_ENV
 
-      - name: Set Yui fiddler name (< 5.17.0)
-        if: env.IS_COMPATIBLE_CONT == 'false'
-        run: echo "Yui_FIDDLER_NAME=libfiddler" | Out-File -Append -FilePath $env:GITHUB_ENV
+      - name: Set Yui fiddler name (< 5.17.0 or on linux)
+        if: env.IS_COMPATIBLE_CONT == 'false' || env.OS_ARCH == 'Linux (x86_64)'
+        run: echo "Yui_FIDDLER_NAME=libfiddler.$env:LIBRARY_EXTENSION" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Set Yui_FIDDLER_NAME as Output
         id: Yui-fiddler-name
@@ -98,26 +137,22 @@ jobs:
           }
         shell: pwsh
 
-      - name: Set Yui Release (>= 5.17.0)
-        if: env.IS_COMPATIBLE_CONT == 'true'
+      - name: Set Yui Release
+        if: env.IS_COMPATIBLE_CONT == 'true' 
         run: echo "Yui_RELEASE=continuous" | Out-File -Append -FilePath $env:GITHUB_ENV
-
-      - name: Set Yui Release (< 5.17.0) 
-        if: env.IS_COMPATIBLE_CONT == 'false'
-        run: echo "Yui_RELEASE=v1.0.9" | Out-File -Append -FilePath $env:GITHUB_ENV
         
       - name: Download Yui Patch
         run: |
           try {
             # Build the download URLs
-            $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-$env:Yui_FIDDLER_NAME-win32-x86_64-$env:Yui_RELEASE.dll"
+            $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-fiddler-win32-x86_64-$env:Yui_RELEASE.$env:LIBRARY_EXTENSION"
             
             # Print the URLs to ensure they're correct
             Write-Host "Downloading files from $env:Yui_RELEASE"
             Write-Host "Yui Fiddler URL: $YuiFiddlerUrl"
 
             # Download the files
-            Invoke-WebRequest -Uri $YuiFiddlerUrl -OutFile "Yui\$env:Yui_FIDDLER_NAME.dll"
+            Invoke-WebRequest -Uri $YuiFiddlerUrl -OutFile "Yui\$env:Yui_FIDDLER_NAME"
           }
           catch {
             Write-Error "Failed to download the patch files. Error details: $_"
@@ -162,9 +197,9 @@ jobs:
           path: msojocs/
           if-no-files-found: error
 
-  download-fiddler-everywhere:
+  download-fiddler-everywhere-windows:
+    if: env.OS_ARCH == 'Windows (x86_64)'
     runs-on: windows-latest
-
     needs: 
       - scrape_fe_version
 
@@ -202,13 +237,52 @@ jobs:
           path: fe_app64/
           if-no-files-found: error
 
+  download-fiddler-everywhere-linux:
+    if: env.OS_ARCH == 'Linux (x86_64)'
+    runs-on: ubuntu-latest
+    needs: 
+      - scrape_fe_version
+
+    steps:
+      - name: Build URL & Download
+        run: |
+          # Retrieve the scraped version from the previous step
+          $scrapedVersion = "${{ needs.scrape_fe_version.outputs.scraped_version }}"
+          
+          # Check if the scraped version is available
+          if (-not [string]::IsNullOrEmpty($scrapedVersion)) {
+            $downloadUrl = "https://downloads.getfiddler.com/linux/fiddler-everywhere-$scrapedVersion.AppImage"
+          
+            Write-Host "Download URL: $downloadUrl"
+
+            Invoke-WebRequest -Uri $downloadUrl -OutFile "FiddlerEverywhereSetup.AppImage"
+            
+          } else {
+            Write-Host "SCRAPED_VERSION is empty or not set"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Extract AppImage 
+        run: |
+          ./FiddlerEverywhereSetup.AppImage --appimage-extract
+          ls -l
+        
+      - name: Upload Fiddler Everywhere Extracted folder as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe_app64
+          path: fe_app64/
+          if-no-files-found: error      
+
   patch_fe:
     runs-on: windows-latest
 
     needs:
       - download-Yui-patch
       - download-msojocs-server
-      - download-fiddler-everywhere
+      - download-fiddler-everywhere-windows
+      - download-fiddler-everywhere-linux
       - scrape_fe_version
 
     env:
@@ -248,8 +322,8 @@ jobs:
 
       - name: Patch fiddler.dll / libfiddler.dll
         run: |
-          $original_fiddler = "FE/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}.dll"
-          $Yui_fiddler = "Yui-patch/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}.dll"
+          $original_fiddler = "FE/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}"
+          $Yui_fiddler = "Yui-patch/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}"
           
           if ((Test-Path $original_fiddler) -and (Test-Path $Yui_fiddler)) {
             Copy-Item -Path $Yui_fiddler -Destination $original_fiddler -Force
