@@ -1,5 +1,5 @@
 > [!WARNING]
-> For some FE versions `cp_dispatch` action workflow won't work for now. [Due to backward compatibility issues] - [ISSUE](https://github.com/msojocs/fiddler-everywhere-enhance/issues/90)
+> You cannot patch FE 5.9.0 for now. [Due to backward compatibility issues] - [ISSUE](https://github.com/msojocs/fiddler-everywhere-enhance/issues/90)
 > <br> Will be Fixed by [Pull](https://github.com/msojocs/fiddler-everywhere-enhance/pull/91)
 
 ## [中文翻译版](README_CN.md)
