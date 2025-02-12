@@ -119,11 +119,15 @@ jobs:
         
       - name: Set Yui fiddler name (>= 5.17.0)
         if: env.IS_COMPATIBLE_CONT == 'true'
-        run: echo "Yui_FIDDLER_NAME=fiddler.$env:LIBRARY_EXTENSION" | Out-File -Append -FilePath $env:GITHUB_ENV
+        run: |
+          echo "Yui_FIDDLER_NAME=fiddler.$env:LIBRARY_EXTENSION" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "Yui_FIDDLER_NAME_NO_EXTENSION=fiddler" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Set Yui fiddler name (< 5.17.0 or on linux)
         if: env.IS_COMPATIBLE_CONT == 'false' || env.OS_ARCH == 'Linux (x86_64)'
-        run: echo "Yui_FIDDLER_NAME=libfiddler.$env:LIBRARY_EXTENSION" | Out-File -Append -FilePath $env:GITHUB_ENV
+        run: |
+          echo "Yui_FIDDLER_NAME=libfiddler.$env:LIBRARY_EXTENSION" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "Yui_FIDDLER_NAME_NO_EXTENSION=libfiddler" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Set Yui_FIDDLER_NAME as Output
         id: Yui-fiddler-name
@@ -145,7 +149,7 @@ jobs:
           Write-Host "EXTENSION = $env:LIBRARY_EXTENSION"
           try {
             # Build the download URLs
-            $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-fiddler-win32-x86_64-$env:Yui_RELEASE.$env:LIBRARY_EXTENSION"
+            $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-$env:Yui_FIDDLER_NAME_NO_EXTENSION-win32-x86_64-$env:Yui_RELEASE.$env:LIBRARY_EXTENSION"
             
             # Print the URLs to ensure they're correct
             Write-Host "Downloading files from $env:Yui_RELEASE"
