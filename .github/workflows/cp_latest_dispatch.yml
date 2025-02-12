@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-latest
     outputs:
       library_extension:  ${{ steps.set_library_extension.outputs.library_extension }}
-      arch_code:  ${{ steps.set_arch.outputs.arch }}
+      arch_code:  ${{ steps.set_arch.outputs.arch_code }}
 
     steps:
       - name: Set Library Extension (dll / so / dylib)
@@ -65,7 +65,7 @@ jobs:
             throw "Unsupported OS architecture: $env:OS_ARCH"
           }
           
-          "arch=$arch" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+          "arch_code=$arch" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
   scrape_fe_version:
     runs-on: windows-latest
@@ -171,6 +171,7 @@ jobs:
       - name: Download Yui Patch
         run: |
           Write-Host "EXTENSION = $env:LIBRARY_EXTENSION"
+          Write-Host "ARCH CODE =  $env:ARCH_CODE"
           try {
             # Build the download URLs
             $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-$env:Yui_FIDDLER_NAME_NO_EXTENSION-$env:ARCH_CODE-$env:Yui_RELEASE.$env:LIBRARY_EXTENSION"
