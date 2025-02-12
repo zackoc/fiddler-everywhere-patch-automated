@@ -350,6 +350,10 @@ jobs:
         run: |
           hdiutil attach FiddlerEverywhere.dmg
           cp -R /Volumes/FiddlerEverywhere/* ./fe_app/
+
+      - name: List fe_app
+        shell: pwsh
+        run: Get-ChildItem -Recurse
         
       - name: Upload Fiddler Everywhere Extracted folder as an artifact
         uses: actions/upload-artifact@v4
