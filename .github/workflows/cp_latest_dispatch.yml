@@ -141,6 +141,7 @@ jobs:
         
       - name: Download Yui Patch
         run: |
+          Write-Host "EXTENSION = $env:LIBRARY_EXTENSION"
           try {
             # Build the download URLs
             $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-fiddler-win32-x86_64-$env:Yui_RELEASE.$env:LIBRARY_EXTENSION"
