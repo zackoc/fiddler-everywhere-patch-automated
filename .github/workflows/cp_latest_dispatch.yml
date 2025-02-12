@@ -263,6 +263,7 @@ jobs:
 
       - name: Extract AppImage 
         run: |
+          chmod +x ./FiddlerEverywhereSetup.AppImage
           ./FiddlerEverywhereSetup.AppImage --appimage-extract
           ls -l
         
