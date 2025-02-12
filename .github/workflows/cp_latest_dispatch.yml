@@ -255,15 +255,15 @@ jobs:
       - name: Extract exe 
         run: 7z x "FiddlerEverywhereSetup.exe" -ofe_extracted
 
-      - name: Extract app64 
-        run: 7z x "fe_extracted/`$PLUGINSDIR/app-64.7z" -ofe_app64
+      - name: Extract app
+        run: 7z x "fe_extracted/`$PLUGINSDIR/app-64.7z" -ofe_app
         shell: pwsh
         
       - name: Upload Fiddler Everywhere Extracted folder as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fe_app64
-          path: fe_app64/
+          name: fe_app
+          path: fe_app/
           if-no-files-found: error
 
   download-fiddler-everywhere-linux:
@@ -296,14 +296,67 @@ jobs:
         run: |
           chmod +x ./FiddlerEverywhereSetup.AppImage
           ./FiddlerEverywhereSetup.AppImage --appimage-extract
-          ls -l
+
+      - name: Rename squashfs-root to fe_app
+        run: mv squashfs-root fe_app
         
       - name: Upload Fiddler Everywhere Extracted folder as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fe_app64
-          path: fe_app64/
-          if-no-files-found: error      
+          name: fe_app
+          path: fe_app/
+          if-no-files-found: error
+
+  download-fiddler-everywhere-mac:
+    if: ${{ github.event.inputs.os-and-arch == 'Mac (x86_64)' || github.event.inputs.os-and-arch == 'Mac (arm64)' || github.event.inputs.os-and-arch == 'Mac (arm64e)' }}
+    runs-on: mac-latest
+    needs: 
+      - scrape_fe_version
+
+    env: 
+      ARCH_CODE: ${{ github.event.inputs.arch_code }}
+
+    steps:
+      - name: Build URL & Download
+        run: |
+          # Retrieve the scraped version from the previous step
+          $scrapedVersion = "${{ needs.scrape_fe_version.outputs.scraped_version }}"
+          
+          # Check if the scraped version is available
+          if (-not [string]::IsNullOrEmpty($scrapedVersion)) {
+            $downloadUrl = "null"
+
+            if ($env:ARCH_CODE -eq "x86_64") {
+              $downloadUrl = "https://downloads.getfiddler.com/mac/Fiddler%20Everywhere%20$scrapedVersion.dmg"
+            } elseif ($env:ARCH_CODE -eq "arm64") {
+              $downloadUrl = "https://downloads.getfiddler.com/mac-arm64/Fiddler%20Everywhere%20$scrapedVersion.dmg"
+            } elseif ($env:ARCH_CODE -eq "arm64e") {
+              //Don't know
+            } else {
+              throw "Unsupported OS architecture: $env:ARCH_CODE"
+            }
+          
+            Write-Host "Download URL: $downloadUrl"
+
+            Invoke-WebRequest -Uri $downloadUrl -OutFile "FiddlerEverywhereSetup.dmg"
+            
+          } else {
+            Write-Host "SCRAPED_VERSION is empty or not set"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Extract AppImage 
+        run: |
+          hdiutil attach FiddlerEverywhere.dmg
+          cp -R /Volumes/FiddlerEverywhere/* ./fe_app/
+        
+      - name: Upload Fiddler Everywhere Extracted folder as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe_app
+          path: fe_app/
+          if-no-files-found: error
 
   patch_fe:
     runs-on: windows-latest
@@ -337,18 +390,18 @@ jobs:
       - name: Download FE
         uses: actions/download-artifact@v4
         with:
-          name: fe_app64
-          path: fe_app64
+          name: fe_app
+          path: fe_app
 
       - name: List the contents of the downloaded artifacts
         run: |
           Get-ChildItem -Recurse Yui-patch
           Get-ChildItem -Recurse msojocs-patch
-          Get-ChildItem -Recurse fe_app64
+          Get-ChildItem -Recurse fe_app
         shell: pwsh
 
       - name: Rename main FE folder
-        run: Rename-Item -Path "fe_app64" -NewName "FE"
+        run: Rename-Item -Path "fe_app" -NewName "FE"
 
       - name: Patch fiddler.dll / libfiddler.dll
         run: |
