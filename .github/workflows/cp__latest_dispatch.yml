@@ -19,14 +19,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_JS_VERSION }}
-
-      - name: Cache Node.js dependencies
-        uses: actions/cache@v4
-        with:
-          path: utils/fe-version-scraper/node_modules
-          key: ${{ runner.os }}-node-${{ env.NODE_JS_VERSION }}-${{ hashFiles('utils/fe-version-scraper/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ env.NODE_JS_VERSION }}-
+          cache: 'npm'  # Auto-caches npm dependencies
+          cache-dependency-path: utils/fe-version-scraper/package-lock.json
 
       - name: Install Node.js dependencies
         run: npm ci
