@@ -370,7 +370,10 @@ jobs:
       - download-msojocs-server
       - download-fiddler-everywhere-windows
       - download-fiddler-everywhere-linux
+      - download-fiddler-everywhere-mac
       - scrape_fe_version
+
+    if: ${{ or(needs.download-fiddler-everywhere-windows.result == 'success', needs.download-fiddler-everywhere-linux.result == 'success', needs.download-fiddler-everywhere-mac.result == 'success') }}
 
     env:
       SCRAPED_VERSION: ${{ needs.scrape_fe_version.outputs.scraped_version }}
