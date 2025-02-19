@@ -11,9 +11,6 @@ on:
         options:
           - Windows (x86_64)
           - Linux (x86_64)
-          - Mac (arm64)
-          - Mac (arm64e)
-          - Mac (x86_64)
 
 env:
   OS_ARCH: ${{ github.event.inputs.os-and-arch }}
