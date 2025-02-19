@@ -14,6 +14,9 @@ This's the guide for applying patch automatically.
 
 
 > [!IMPORTANT]
+> Linux Automated Patching is Supported Now!
+
+> [!IMPORTANT]
 > ### Update Notice: Support for Syncing forks with upstream repo: [READ MORE](#scheduled-syncing-forks-with-upstream-repo)
 
 ---
