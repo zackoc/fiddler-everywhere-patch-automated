@@ -365,12 +365,14 @@ jobs:
   patch_fe:
     runs-on: windows-latest
 
-    if: success() || cancelled()
-
     needs:
       - download-Yui-patch
       - download-msojocs-server
       - scrape_fe_version
+      - download-fiddler-everywhere-windows
+      - download-fiddler-everywhere-linux
+      - download-fiddler-everywhere-mac
+    if: always()
 
     env:
       SCRAPED_VERSION: ${{ needs.scrape_fe_version.outputs.scraped_version }}
