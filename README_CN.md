@@ -10,6 +10,10 @@
 
 ![无限试用期](https://github.com/user-attachments/assets/e9c83778-27fa-456a-96e6-07bb0cd7f4ad)
 
+
+> [!IMPORTANT]
+> Linux 自动补丁现已支持！
+
 > [!IMPORTANT]
 > ### 更新通知：支持同步 Fork 与上游仓库：[阅读更多](#scheduled-syncing-forks-with-upstream-repo)
 
