@@ -79,9 +79,6 @@ jobs:
     outputs:
       library_extension:  ${{ steps.set_library_extension.outputs.library_extension }}
       arch_code:  ${{ steps.set_arch.outputs.arch_code }}
-
-    needs:
-      - validate-version
       
     steps:
       - name: Set Library Extension (dll / so / dylib)
