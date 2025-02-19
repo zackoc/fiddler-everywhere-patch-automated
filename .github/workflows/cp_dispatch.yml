@@ -7,11 +7,19 @@ on:
         description: 'The Version You Want to Patch'
         required: true
         default: '6.0.0'
+      os-and-arch:
+        description: 'Operating System And Architecture'
+        required: true
+        type: choice
+        options:
+          - Windows (x86_64)
+          - Linux (x86_64)
 
 env:
+  OS_ARCH: ${{ github.event.inputs.os-and-arch }}
   VERSION_TO_PATCH: ${{ github.event.inputs.version_to_patch }}
 
-jobs: 
+jobs:
 
   validate-version:
     runs-on: windows-latest
@@ -65,21 +73,73 @@ jobs:
           }
           
           echo "is_valid=$isValid" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
- 
+
+  init_os_arch:
+    runs-on: windows-latest
+    outputs:
+      library_extension:  ${{ steps.set_library_extension.outputs.library_extension }}
+      arch_code:  ${{ steps.set_arch.outputs.arch_code }}
+      
+    steps:
+      - name: Set Library Extension (dll / so / dylib)
+        id: set_library_extension
+        shell: pwsh
+        run: |
+          $extension = 'not-selected'
+    
+          if ($env:OS_ARCH -eq 'Windows (x86_64)') {
+            $extension = 'dll'
+          } elseif ($env:OS_ARCH -eq 'Linux (x86_64)') {
+            $extension = 'so'
+          } elseif ($env:OS_ARCH -eq 'Mac (arm64)' -or $env:OS_ARCH -eq 'Mac (arm64e)' -or $env:OS_ARCH -eq 'Mac (x86_64)') {
+            $extension = 'dylib'
+          } else {
+            throw "Unsupported OS architecture: $env:OS_ARCH"
+          }
+          
+          "library_extension=$extension" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+
+      - name: Set Library Extension (dll / so / dylib)
+        id: set_arch
+        shell: pwsh
+        run: |
+          $arch = 'not-selected'
+    
+          if ($env:OS_ARCH -eq 'Windows (x86_64)') {
+            $arch = 'win32-x86_64'
+          } elseif ($env:OS_ARCH -eq 'Linux (x86_64)') {
+            $arch = 'linux-x86_64'
+          } elseif ($env:OS_ARCH -eq 'Mac (arm64)') {
+            $arch = 'mac-arm64'
+          } elseif ($env:OS_ARCH -eq 'Mac (arm64e)') {
+            $arch = 'mac-arm64e'
+          } elseif ($env:OS_ARCH -eq 'Mac (x86_64)') {
+            $arch = 'mac-x86_64'
+          } else {
+            throw "Unsupported OS architecture: $env:OS_ARCH"
+          }
+          
+          "arch_code=$arch" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+   
   download-Yui-patch:
     runs-on: windows-latest
-
-    needs: validate-version
+    needs: 
+      - validate-version
+      - init_os_arch
 
     if: ${{ needs.validate-version.outputs.is_valid }} == 'true'
-    
+
+    env: 
+      LIBRARY_EXTENSION: ${{ needs.init_os_arch.outputs.library_extension }}
+      ARCH_CODE: ${{ needs.init_os_arch.outputs.arch_code }}
+      
     outputs:
       is-compatible-cont: ${{ steps.is-compatible-cont.outputs.is-compatible-cont }}
       Yui-fiddler-name: ${{ steps.Yui-fiddler-name.outputs.Yui-fiddler-name }}
 
     steps:
-      - name: Compare Patching Version Compatible with 5.17.0
-        id: version_check
+      - name: Compare VERSION_TO_PATCH with 5.17.0
+        id: version_to_patch_check
         run: |
           $patchingVersion = $env:VERSION_TO_PATCH
           $compareVersion = "5.17.0"
@@ -100,16 +160,20 @@ jobs:
         id: is-compatible-cont
         run: echo "is-compatible-cont=${{ env.IS_COMPATIBLE_CONT }}" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
-      - name: Set Yui name
+      - name: Set Yui name 
         run: echo "YUI_NAME=yui" | Out-File -Append -FilePath $env:GITHUB_ENV
         
       - name: Set Yui fiddler name (>= 5.17.0)
         if: env.IS_COMPATIBLE_CONT == 'true'
-        run: echo "Yui_FIDDLER_NAME=fiddler" | Out-File -Append -FilePath $env:GITHUB_ENV
+        run: |
+          echo "Yui_FIDDLER_NAME=fiddler.$env:LIBRARY_EXTENSION" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "Yui_FIDDLER_NAME_NO_EXTENSION=fiddler" | Out-File -Append -FilePath $env:GITHUB_ENV
 
-      - name: Set Yui fiddler name (< 5.17.0)
-        if: env.IS_COMPATIBLE_CONT == 'false'
-        run: echo "Yui_FIDDLER_NAME=libfiddler" | Out-File -Append -FilePath $env:GITHUB_ENV
+      - name: Set Yui fiddler name (< 5.17.0 or on linux)
+        if: env.IS_COMPATIBLE_CONT == 'false' || env.OS_ARCH == 'Linux (x86_64)'
+        run: |
+          echo "Yui_FIDDLER_NAME=libfiddler.$env:LIBRARY_EXTENSION" | Out-File -Append -FilePath $env:GITHUB_ENV
+          echo "Yui_FIDDLER_NAME_NO_EXTENSION=libfiddler" | Out-File -Append -FilePath $env:GITHUB_ENV
 
       - name: Set Yui_FIDDLER_NAME as Output
         id: Yui-fiddler-name
@@ -127,16 +191,18 @@ jobs:
         
       - name: Download Yui Patch
         run: |
+          Write-Host "EXTENSION = $env:LIBRARY_EXTENSION"
+          Write-Host "ARCH CODE =  $env:ARCH_CODE"
           try {
             # Build the download URLs
-            $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-fiddler-win32-x86_64-$env:Yui_RELEASE.dll"
+            $YuiFiddlerUrl = "https://github.com/project-yui/Yui-patch/releases/download/$env:Yui_RELEASE/$env:YUI_NAME-fiddler-$env:ARCH_CODE-$env:Yui_RELEASE.$env:LIBRARY_EXTENSION"
             
             # Print the URLs to ensure they're correct
             Write-Host "Downloading files from $env:Yui_RELEASE"
             Write-Host "Yui Fiddler URL: $YuiFiddlerUrl"
 
             # Download the files
-            Invoke-WebRequest -Uri $YuiFiddlerUrl -OutFile "Yui\$env:Yui_FIDDLER_NAME.dll"
+            Invoke-WebRequest -Uri $YuiFiddlerUrl -OutFile "Yui\$env:Yui_FIDDLER_NAME"
           }
           catch {
             Write-Error "Failed to download the patch files. Error details: $_"
@@ -154,10 +220,8 @@ jobs:
   download-msojocs-server:
     runs-on: windows-latest
 
-    needs: validate-version
-
     if: ${{ needs.validate-version.outputs.is_valid }} == 'true'
-    
+
     steps:
       - name: Set up Git
         run: |
@@ -185,12 +249,11 @@ jobs:
           path: msojocs/
           if-no-files-found: error
 
-  download-fiddler-everywhere:
+  download-fiddler-everywhere-windows:
+    if: ${{ github.event.inputs.os-and-arch == 'Windows (x86_64)' }}
     runs-on: windows-latest
-
-    needs: validate-version
-
-    if: ${{ needs.validate-version.outputs.is_valid }} == 'true'
+    needs: 
+      - validate-version
 
     steps:
       - name: Build URL & Download
@@ -207,7 +270,7 @@ jobs:
             Invoke-WebRequest -Uri $downloadUrl -OutFile "FiddlerEverywhereSetup.exe"
             
           } else {
-            Write-Host "VERSION_TO_PATCH is empty or not set"
+            Write-Host "PATCHING_VERSION is empty or not set"
             exit 1
           }
         shell: pwsh
@@ -215,15 +278,111 @@ jobs:
       - name: Extract exe 
         run: 7z x "FiddlerEverywhereSetup.exe" -ofe_extracted
 
-      - name: Extract app64 
-        run: 7z x "fe_extracted/`$PLUGINSDIR/app-64.7z" -ofe_app64
+      - name: Extract app
+        run: 7z x "fe_extracted/`$PLUGINSDIR/app-64.7z" -ofe_app
         shell: pwsh
         
       - name: Upload Fiddler Everywhere Extracted folder as an artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fe_app64
-          path: fe_app64/
+          name: fe_app
+          path: fe_app/
+          if-no-files-found: error
+
+  download-fiddler-everywhere-linux:
+    if: ${{ github.event.inputs.os-and-arch == 'Linux (x86_64)' }}
+    runs-on: ubuntu-latest
+    needs: 
+      - validate-version
+
+    steps:
+      - name: Build URL & Download
+        run: |
+          # Retrieve the version to patch from the previous step
+          $patchingVersion = $env:VERSION_TO_PATCH
+          
+          # Check if the patchingVersion version is available
+          if (-not [string]::IsNullOrEmpty($patchingVersion)) {
+            $downloadUrl = "https://downloads.getfiddler.com/linux/fiddler-everywhere-$patchingVersion.AppImage"
+          
+            Write-Host "Download URL: $downloadUrl"
+
+            Invoke-WebRequest -Uri $downloadUrl -OutFile "FiddlerEverywhereSetup.AppImage"
+            
+          } else {
+            Write-Host "VERSION_TO_PATCH is empty or not set"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Extract AppImage 
+        run: |
+          chmod +x ./FiddlerEverywhereSetup.AppImage
+          ./FiddlerEverywhereSetup.AppImage --appimage-extract
+
+      - name: Rename squashfs-root to fe_app
+        run: mv squashfs-root fe_app
+        
+      - name: Upload Fiddler Everywhere Extracted folder as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe_app
+          path: fe_app/
+          if-no-files-found: error
+
+  download-fiddler-everywhere-mac:
+    if: ${{ github.event.inputs.os-and-arch == 'Mac (x86_64)' || github.event.inputs.os-and-arch == 'Mac (arm64)' || github.event.inputs.os-and-arch == 'Mac (arm64e)' }}
+    runs-on: mac-latest
+    needs: 
+      - validate-version
+
+    env: 
+      ARCH_CODE: ${{ github.event.inputs.arch_code }}
+
+    steps:
+      - name: Build URL & Download
+        run: |
+          # Retrieve the version_to_patch version from the previous step
+          $patchingVersion = $env:VERSION_TO_PATCH
+          
+          # Check if the version_to_patch version is available
+          if (-not [string]::IsNullOrEmpty($patchingVersion)) {
+            $downloadUrl = "null"
+
+            if ($env:ARCH_CODE -eq "x86_64") {
+              $downloadUrl = "https://downloads.getfiddler.com/mac/Fiddler%20Everywhere%20$patchingVersion.dmg"
+            } elseif ($env:ARCH_CODE -eq "arm64") {
+              $downloadUrl = "https://downloads.getfiddler.com/mac-arm64/Fiddler%20Everywhere%20$patchingVersion.dmg"
+            } elseif ($env:ARCH_CODE -eq "arm64e") {
+              //Don't know
+            } else {
+              throw "Unsupported OS architecture: $env:ARCH_CODE"
+            }
+          
+            Write-Host "Download URL: $downloadUrl"
+
+            Invoke-WebRequest -Uri $downloadUrl -OutFile "FiddlerEverywhereSetup.dmg"
+            
+          } else {
+            Write-Host "VERSION_TO_PATCH is empty or not set"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Extract AppImage 
+        run: |
+          hdiutil attach FiddlerEverywhere.dmg
+          cp -R /Volumes/FiddlerEverywhere/* ./fe_app/
+
+      - name: List fe_app
+        shell: pwsh
+        run: Get-ChildItem -Recurse
+        
+      - name: Upload Fiddler Everywhere Extracted folder as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fe_app
+          path: fe_app/
           if-no-files-found: error
 
   patch_fe:
@@ -232,7 +391,11 @@ jobs:
     needs:
       - download-Yui-patch
       - download-msojocs-server
-      - download-fiddler-everywhere
+      - validate-version
+      - download-fiddler-everywhere-windows
+      - download-fiddler-everywhere-linux
+      - download-fiddler-everywhere-mac
+    if: always()
 
     outputs:
       patched-fe-name: ${{ steps.rename-fe.outputs.patched-fe-name }}
@@ -253,23 +416,23 @@ jobs:
       - name: Download FE
         uses: actions/download-artifact@v4
         with:
-          name: fe_app64
-          path: fe_app64
+          name: fe_app
+          path: fe_app
 
       - name: List the contents of the downloaded artifacts
         run: |
           Get-ChildItem -Recurse Yui-patch
           Get-ChildItem -Recurse msojocs-patch
-          Get-ChildItem -Recurse fe_app64
+          Get-ChildItem -Recurse fe_app
         shell: pwsh
 
       - name: Rename main FE folder
-        run: Rename-Item -Path "fe_app64" -NewName "FE"
+        run: Rename-Item -Path "fe_app" -NewName "FE"
 
       - name: Patch fiddler.dll / libfiddler.dll
         run: |
-          $original_fiddler = "FE/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}.dll"
-          $Yui_fiddler = "Yui-patch/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}.dll"
+          $original_fiddler = "FE/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}"
+          $Yui_fiddler = "Yui-patch/${{ needs.download-Yui-patch.outputs.Yui-fiddler-name }}"
           
           if ((Test-Path $original_fiddler) -and (Test-Path $Yui_fiddler)) {
             Copy-Item -Path $Yui_fiddler -Destination $original_fiddler -Force
