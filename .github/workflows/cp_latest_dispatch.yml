@@ -365,11 +365,12 @@ jobs:
   patch_fe:
     runs-on: windows-latest
 
+    if: success() || cancelled()
+
     needs:
       - download-Yui-patch
       - download-msojocs-server
       - scrape_fe_version
-
 
     env:
       SCRAPED_VERSION: ${{ needs.scrape_fe_version.outputs.scraped_version }}
