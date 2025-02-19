@@ -187,7 +187,6 @@ jobs:
         shell: pwsh
 
       - name: Set Yui Release
-        if: env.IS_COMPATIBLE_CONT == 'true' 
         run: echo "Yui_RELEASE=continuous" | Out-File -Append -FilePath $env:GITHUB_ENV
         
       - name: Download Yui Patch
