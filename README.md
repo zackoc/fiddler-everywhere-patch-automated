@@ -16,6 +16,9 @@ This's the guide for applying patch automatically.
 > [!IMPORTANT]
 > Linux Automated Patching is Supported Now!
 
+> [!WARNING]
+> The new patch want to write files in a directory inside FE app itself. So you need to give write permissions in Linux. See [#27](https://github.com/auto-yui-patch/fiddler-everywhere-patch-automated/issues/27) for more. And feel free to drop your suggestion to automate the process.
+
 > [!IMPORTANT]
 > ### Update Notice: Support for Syncing forks with upstream repo: [READ MORE](#scheduled-syncing-forks-with-upstream-repo)
 
