@@ -12,4 +12,4 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-Please report any vulnerabilities you find in GH Issues. We'll solve them ASAP.
+Please report any vulnerabilities you find in GH Security Advisories. We'll solve them ASAP.
